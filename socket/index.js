@@ -136,7 +136,43 @@ io.on('connection', (socket) => {
         const driver_value = Drivers.get(payload.driver.email)
         io.to(driver_value.id).emit(Locate.DIRECT_PAIR,payload)
     })
-   
+    socket.on(Driver.DRIVER_FINISH, (payload) => {
+        const driver_value = Drivers.get(payload.driver.email)
+        Drivers.set(payload.driver.email, {
+            id: driver_value.id,
+            status: "free"
+        })
+        ChangeDriverStatus(payload.driver._id)
+            .then(response => {
+                for (let [key, value] of Locaters) {
+                    io.to(value.id).emit(Driver.DRIVER_FINISH, payload)
+                }
+                console.log("pointer", Pointers)
+                if (Pointers) {
+                    io.to(Pointers).emit("UPDATE", "OK")
+                }
+            })
+            .catch(err => {
+                console.log("errr", err)
+                throw err
+            })
+
+    })
+    socket.on("disconnect", (reason) => {
+        for (let [key, value] of Drivers) {
+            if (value.id === socket.id) {
+                console.log(`Bye: ${key}`)
+                OfflineDriver(key)
+                    .then(response => {
+                        for (let [key, value] of Locaters) {
+                            io.to(value.id).emit(Driver.OFFLINE, response.data.message.driver_id)
+                        }
+                    })
+                    .catch(err => console.error(err))
+                break;
+            }
+        }
+    })
 })
 server.listen(8000, (err) => {
     if (err) throw err
