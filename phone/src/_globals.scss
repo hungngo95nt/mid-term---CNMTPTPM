@@ -1,0 +1,10 @@
+@import 'react-md/src/scss/react-md';
+
+// Variable overrides
+$md-primary-color: $md-teal-500;
+$md-secondary-color: $md-orange-500;
+
+//font size 
+$md-text-field-custom-sizes: (
+  username: ($md-display-1-font-size, .25s, 42px, 36px),
+) !default;
